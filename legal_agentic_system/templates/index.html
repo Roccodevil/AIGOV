@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Citizen Navigator | Dual Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    <style>
+        .markdown-body h3 { font-size: 1.25rem; font-weight: 700; margin-top: 1.5em; margin-bottom: 0.75em; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.3em; }
+        .markdown-body p { margin-bottom: 1em; line-height: 1.6; }
+        .markdown-body ul { margin-left: 1.5em; margin-bottom: 1em; list-style-type: disc; }
+        .markdown-body a { color: #2563eb; text-decoration: underline; font-weight: 500; }
+        .dark .markdown-body h3 { border-color: #334155; color: white; }
+        .dark .markdown-body p, .dark .markdown-body li { color: #cbd5e1; }
+        .dark .markdown-body a { color: #60a5fa; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 min-h-screen text-slate-800 dark:text-slate-200 transition-colors">
+
+    <nav class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-6 py-4 sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white p-2 rounded-lg"><i class="fa-solid fa-building-columns"></i></div>
+                <h1 class="text-xl font-bold">Citizen Navigator</h1>
+            </div>
+
+            <div class="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
+                <button onclick="switchTab('legal')" id="btn-legal" class="px-4 py-2 text-sm font-medium rounded-md bg-white dark:bg-slate-800 shadow-sm transition-all">⚖️ Legal Resolution</button>
+                <button onclick="switchTab('profile')" id="btn-profile" class="px-4 py-2 text-sm font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-700 transition-all">🎓 Opportunity Finder</button>
+            </div>
+
+            <button onclick="document.documentElement.classList.toggle('dark')" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700">
+                <i class="fa-solid fa-circle-half-stroke"></i>
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-6 py-8">
+
+        <div id="view-legal" class="block space-y-8">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                <h2 class="text-lg font-bold mb-4">Analyze Legal Issue</h2>
+                <form id="legal-form" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Domain</label>
+                            <select name="legal_category" class="w-full border p-2 rounded-lg bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                                <option value="Cyber Crime">Cyber Crime</option>
+                                <option value="Tax & Finance">Tax & Finance</option>
+                                <option value="Civil Dispute">Civil Dispute</option>
+                                <option value="Corporate/Startup">Corporate/Startup</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Current Stage</label>
+                            <select name="case_status" class="w-full border p-2 rounded-lg bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                                <option value="Need Information">Just need information</option>
+                                <option value="Received Notice">Received a Government/Legal Notice</option>
+                                <option value="Active Case">Active Court Case</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Upload Notice/Document</label>
+                        <input type="file" name="file" accept=".pdf,.png,.jpg,.txt" class="w-full text-sm border p-2 rounded-lg bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Or Describe Situation</label>
+                        <textarea name="raw_text" rows="3" class="w-full border p-3 rounded-lg bg-slate-50 dark:bg-slate-700 dark:border-slate-600" placeholder="E.g., I received a tax notice..."></textarea>
+                    </div>
+                    <button type="submit" id="btn-submit-legal" class="w-full bg-blue-600 text-white py-3 rounded-xl font-medium hover:bg-blue-700">Find Legal Recourse</button>
+                </form>
+            </div>
+
+            <div id="legal-loading" class="hidden text-center py-10 animate-pulse">Querying official government databases...</div>
+            <div id="legal-results" class="hidden bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-sm border border-slate-200 dark:border-slate-700">
+                <div id="legal-output" class="markdown-body"></div>
+            </div>
+        </div>
+
+        <div id="view-profile" class="hidden space-y-8">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                <h2 class="text-lg font-bold mb-4">Discover Schemes & Missed Opportunities</h2>
+                <form id="profile-form" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Age</label>
+                            <input type="number" name="user_age" placeholder="20" class="w-full border p-2 rounded-lg bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">State</label>
+                            <input type="text" name="user_state" placeholder="e.g., Uttar Pradesh" class="w-full border p-2 rounded-lg bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Education Level</label>
+                        <input type="text" name="user_education" placeholder="e.g., 3rd Year B.Tech" class="w-full border p-2 rounded-lg bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Specialization</label>
+                        <input type="text" name="user_specialization" placeholder="e.g., CS (AIML & IoT)" class="w-full border p-2 rounded-lg bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Gender</label>
+                            <select name="user_gender" class="w-full border p-2 rounded-lg bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Annual Family Income</label>
+                            <select name="annual_income" class="w-full border p-2 rounded-lg bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                                <option value="Below 2.5 Lakhs">Below 2.5 Lakhs</option>
+                                <option value="2.5 to 8 Lakhs">2.5 to 8 Lakhs</option>
+                                <option value="Above 8 Lakhs">Above 8 Lakhs</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-1">Current Status</label>
+                        <select name="current_status" class="w-full border p-2 rounded-lg bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                            <option value="Student">Student</option>
+                            <option value="Unemployed">Unemployed</option>
+                            <option value="Working Professional">Working Professional</option>
+                            <option value="Entrepreneur">Entrepreneur</option>
+                        </select>
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-1">Primary Goal (Optional)</label>
+                        <input type="text" name="user_goal" placeholder="e.g., Start an AI company" class="w-full border p-2 rounded-lg bg-slate-50 dark:bg-slate-700 dark:border-slate-600">
+                    </div>
+                    <div class="mt-4">
+                        <label class="block text-sm font-medium mb-1">Projects, Leadership, or Skills (Optional)</label>
+                        <textarea name="extracurriculars" rows="2" class="w-full border p-3 rounded-lg bg-slate-50 dark:bg-slate-700 dark:border-slate-600" placeholder="E.g., Built machine learning apps, led a university tech club..."></textarea>
+                    </div>
+                    <button type="submit" id="btn-submit-profile" class="w-full bg-teal-600 text-white py-3 rounded-xl font-medium hover:bg-teal-700">Generate Insight Report</button>
+                </form>
+            </div>
+
+            <div id="profile-loading" class="hidden text-center py-10 animate-pulse">Analyzing active and expired schemes...</div>
+            <div id="profile-results" class="hidden bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-sm border border-slate-200 dark:border-slate-700">
+                <div id="profile-opportunities" class="space-y-3 mb-6"></div>
+                <div id="profile-missed" class="space-y-3 mb-6"></div>
+                <div id="profile-output" class="markdown-body"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        function switchTab(tab) {
+            const isLegal = tab === 'legal';
+
+            document.getElementById('view-legal').classList.toggle('hidden', !isLegal);
+            document.getElementById('view-legal').classList.toggle('block', isLegal);
+
+            document.getElementById('view-profile').classList.toggle('hidden', isLegal);
+            document.getElementById('view-profile').classList.toggle('block', !isLegal);
+
+            const btnClassActive = "px-4 py-2 text-sm font-medium rounded-md bg-white dark:bg-slate-800 shadow-sm transition-all text-slate-800 dark:text-white";
+            const btnClassInactive = "px-4 py-2 text-sm font-medium rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-700 transition-all bg-transparent shadow-none";
+
+            document.getElementById('btn-legal').className = isLegal ? btnClassActive : btnClassInactive;
+            document.getElementById('btn-profile').className = !isLegal ? btnClassActive : btnClassInactive;
+        }
+
+        async function handleForm(e, endpoint, btnId, loadingId, resultsId, outputId) {
+            e.preventDefault();
+            const btn = document.getElementById(btnId);
+            const loading = document.getElementById(loadingId);
+            const results = document.getElementById(resultsId);
+
+            btn.disabled = true;
+            btn.innerText = 'Processing...';
+            results.classList.add('hidden');
+            loading.classList.remove('hidden');
+
+            try {
+                const response = await fetch(endpoint, { method: 'POST', body: new FormData(e.target) });
+                const data = await response.json();
+
+                if (data.success) {
+                    if (endpoint === '/api/analyze_profile') {
+                        const oppsBox = document.getElementById('profile-opportunities');
+                        const missedBox = document.getElementById('profile-missed');
+                        const opps = Array.isArray(data.opportunities) ? data.opportunities : [];
+                        const missed = Array.isArray(data.missed_opportunities) ? data.missed_opportunities : [];
+
+                        oppsBox.innerHTML = opps.length
+                            ? '<h3 class="text-lg font-semibold mb-2">🎯 Recommended Opportunities</h3>' + opps.map(item => `\n                                <div class="border border-slate-200 dark:border-slate-700 rounded-lg p-4">\n                                    <div class="font-semibold">${item.name || 'Opportunity'}</div>\n                                    <div class="text-sm text-slate-500 dark:text-slate-400">${item.category || ''}</div>\n                                    <div class="text-sm mt-2">${item.why_this_suits_you || ''}</div>\n                                    <div class="text-xs mt-2 text-slate-500 dark:text-slate-400">Eligibility: ${item.eligibility_fit || 'N/A'} | Time: ${item.average_time_to_redeem || 'N/A'} | Accessibility: ${item.accessibility_score || 'N/A'}</div>\n                                </div>`).join('')
+                            : '';
+
+                        missedBox.innerHTML = missed.length
+                            ? '<h3 class="text-lg font-semibold mb-2">⚠️ Missed Opportunities</h3>' + missed.map(item => `\n                                <div class="border border-amber-200 dark:border-amber-700 rounded-lg p-4">\n                                    <div class="font-semibold">${item.name || 'Opportunity'}</div>\n                                    <div class="text-sm mt-1">${item.reason_missed || ''}</div>\n                                    <div class="text-sm mt-1 text-slate-500 dark:text-slate-400">Next: ${item.next_cycle_hint || ''} (${item.expected_next_window || 'TBD'})</div>\n                                </div>`).join('')
+                            : '';
+
+                        const roadmapText = data.roadmap || data.report || '';
+                        document.getElementById(outputId).innerHTML = marked.parse(roadmapText);
+                    } else {
+                        const outputText = data.solution || data.report;
+                        document.getElementById(outputId).innerHTML = marked.parse(outputText);
+                    }
+                    results.classList.remove('hidden');
+                } else {
+                    alert("Error: " + data.error);
+                }
+            } catch (err) {
+                alert("Server connection failed.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = btnId.includes('legal') ? 'Find Legal Recourse' : 'Generate Insight Report';
+                loading.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('legal-form').addEventListener('submit', (e) => handleForm(e, '/api/analyze_legal', 'btn-submit-legal', 'legal-loading', 'legal-results', 'legal-output'));
+        document.getElementById('profile-form').addEventListener('submit', (e) => handleForm(e, '/api/analyze_profile', 'btn-submit-profile', 'profile-loading', 'profile-results', 'profile-output'));
+    </script>
+</body>
+</html>
