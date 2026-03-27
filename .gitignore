@@ -11,8 +11,3 @@ __pycache__/
 
 # Local backups / temp
 legal_agentic_system.git.backup/
-
-# Optional large local data (kept out of Git by default)
-legal_agentic_system/data/
-legal_agentic_system/faiss_index/
-legal_agentic_system/policy_faiss_index/

@@ -42,10 +42,3 @@ Thumbs.db
 tmp/
 temp/
 temp_page_*.jpg
-
-# Local vector DB / retrieval artifacts
-faiss_index/
-policy_faiss_index/
-
-# Local app data (optional large/generated assets)
-data/
