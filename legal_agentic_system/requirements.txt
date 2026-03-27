@@ -13,4 +13,4 @@ tavily-python
 faiss-cpu
 python-dotenv
 pypdf
-sentence-transformer
+sentence-transformers
